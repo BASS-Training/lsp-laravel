@@ -1,0 +1,24 @@
+/* ============================================
+   LSP FIT — aboutus.css
+   About page specific styles only.
+   Global navbar/footer/buttons handled by
+   styles.css + brand.css + pages.css
+   ============================================ */
+
+/* ── Scroll Progress Bar ── */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: rgba(13,27,42,0.08);
+  z-index: 2000;
+  pointer-events: none;
+}
+.scroll-bar {
+  height: 3px;
+  width: 0%;
+  background: var(--red, #C91A1A);
+  transition: width 0.1s linear;
+}
