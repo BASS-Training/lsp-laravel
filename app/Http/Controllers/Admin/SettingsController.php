@@ -4,15 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\UploadStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class SettingsController extends Controller
 {
+    public function __construct(private UploadStorage $uploads) {}
+
     private const HIDDEN_SETTING_KEYS = [
         'home_hero_image',
         'home_hero_button_url',
@@ -84,12 +85,8 @@ class SettingsController extends Controller
 
         foreach (['about_leader_image_file' => ['about_leader_image', 'profile'], 'about_video_file' => ['about_video_url', 'profile']] as $fileField => [$settingKey, $folder]) {
             if ($request->hasFile($fileField)) {
-                $file = $request->file($fileField);
-                $fileName = Str::random(24).'.'.$file->extension();
-                $path = $file->storeAs('uploads/'.$folder, $fileName, 'public');
-                abort_if($path === false, 500, 'Berkas gagal disimpan.');
                 $replacedUploads[] = [$settings->firstWhere('setting_key', $settingKey)?->setting_value, $folder];
-                $validated[$settingKey] = '/storage/'.$path;
+                $validated[$settingKey] = $this->uploads->store($request->file($fileField), $folder);
                 $uploadedSettings[$settingKey] = $validated[$settingKey];
             }
             unset($validated[$fileField]);
@@ -111,7 +108,7 @@ class SettingsController extends Controller
         }
 
         foreach ($replacedUploads as [$previousUrl, $folder]) {
-            $this->deleteOwnedUpload($previousUrl, $folder);
+            $this->uploads->deleteOwned($previousUrl, $folder);
         }
 
         return back()->with('status', 'Pengaturan berhasil disimpan.');
@@ -138,29 +135,6 @@ class SettingsController extends Controller
         $parts = array_values(array_filter(explode('_', $key), fn (string $part): bool => ! in_array($part, ['home', 'about', 'contact'], true)));
 
         return ucfirst(implode(' ', array_map(fn (string $part): string => $translations[$part] ?? $part, $parts)));
-    }
-
-    private function deleteOwnedUpload(?string $url, string $folder): void
-    {
-        if (! is_string($url)) {
-            return;
-        }
-
-        if (preg_match('~^/storage/uploads/'.preg_quote($folder, '~').'/(?:[A-Za-z0-9]{24}|[a-f0-9]{32})\.(?:jpe?g|png|webp|mp4)$~', $url) === 1) {
-            Storage::disk('public')->delete(substr($url, strlen('/storage/')));
-
-            return;
-        }
-
-        if (preg_match('~^/assets/uploads/'.preg_quote($folder, '~').'/(?:[A-Za-z0-9]{24}|[a-f0-9]{32})\.(?:jpe?g|png|webp|mp4)$~', $url) !== 1) {
-            return;
-        }
-
-        $path = public_path(ltrim($url, '/'));
-
-        if (is_file($path)) {
-            unlink($path);
-        }
     }
 
     /** @return Collection<int, SiteSetting> */

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0d2b4e">
     <title>@yield('title', 'Beranda') · LSP FIT</title>
     <meta name="description" content="@yield('description', 'Lembaga Sertifikasi Profesi Fasilitator, Instruktur dan Tenaga Kepelatihan')">
-    <link rel="icon" href="{{ asset('asset/lspfit/favicon.ico') }}">
+    <link rel="icon" href="{{ asset('assets/lspfit/favicon.ico') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-50 text-slate-900 antialiased">
@@ -14,7 +14,7 @@
     <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-3 lg:px-8">
             <a href="{{ route('home') }}" aria-label="LSP FIT, beranda">
-                <img src="{{ asset('asset/lspfit/logofit-nobg.png') }}" alt="Logo LSP FIT" class="h-12 w-auto object-contain sm:h-14">
+                <img src="{{ asset('assets/lspfit/logofit-nobg.png') }}" alt="Logo LSP FIT" class="h-12 w-auto object-contain sm:h-14">
             </a>
             <nav aria-label="Navigasi utama" class="flex w-full flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium lg:w-auto">
                 <a href="{{ route('home') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('home'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('home')])>Beranda</a>

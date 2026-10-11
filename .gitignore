@@ -25,3 +25,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Unggahan runtime (bukan bagian kode); .htaccess dan .gitkeep tetap dilacak
+/public/assets/uploads/*/*
+!/public/assets/uploads/*/.htaccess
+!/public/assets/uploads/*/.gitkeep

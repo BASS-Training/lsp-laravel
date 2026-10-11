@@ -26,8 +26,8 @@ Route::get('/api/kegiatan.php', [LegacyApiController::class, 'kegiatan']);
 Route::get('/api/anggota.php', [LegacyApiController::class, 'anggota']);
 Route::get('/api/instruktur.php', [LegacyApiController::class, 'instruktur']);
 Route::get('/api/partners.php', [LegacyApiController::class, 'partners']);
-Route::get('/api/homepage.php', [LegacyApiController::class, 'settings']);
-Route::get('/api/profile.php', [LegacyApiController::class, 'settings']);
+Route::get('/api/homepage.php', [LegacyApiController::class, 'homepage']);
+Route::get('/api/profile.php', [LegacyApiController::class, 'profile']);
 
 Route::get('/admin/login', [AuthController::class, 'create'])->name('login');
 Route::post('/admin/login', [AuthController::class, 'store'])->middleware('throttle:5,1')->name('admin.login');

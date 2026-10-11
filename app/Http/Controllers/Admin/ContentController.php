@@ -7,16 +7,18 @@ use App\Models\Anggota;
 use App\Models\Instruktur;
 use App\Models\Kegiatan;
 use App\Models\Partner;
+use App\Services\UploadStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ContentController extends Controller
 {
+    public function __construct(private UploadStorage $uploads) {}
+
     /**
      * @return array{title: string, description: string, model: class-string<Model>, fields: array<string, string>, image: string, folder: string}
      */
@@ -100,7 +102,7 @@ class ContentController extends Controller
         $item->update($data);
 
         if ($previousImageUrl !== $item->{$definition['image']}) {
-            $this->deleteOwnedUpload($previousImageUrl, $definition['folder']);
+            $this->uploads->deleteOwned($previousImageUrl, $definition['folder']);
         }
 
         return redirect()->route('admin.content.index', $module)->with('status', 'Konten berhasil diperbarui.');
@@ -113,7 +115,7 @@ class ContentController extends Controller
         $item = $model::findOrFail($id);
         $imageUrl = $item->{$definition['image']};
         $item->delete();
-        $this->deleteOwnedUpload($imageUrl, $definition['folder']);
+        $this->uploads->deleteOwned($imageUrl, $definition['folder']);
 
         return redirect()->route('admin.content.index', $module)->with('status', 'Konten berhasil dihapus.');
     }
@@ -123,6 +125,8 @@ class ContentController extends Controller
      */
     private function validatedData(Request $request, string $module, ?Model $item = null): array
     {
+        $definition = $this->module($module);
+
         if ($module === 'kegiatan') {
             $slug = $item?->slug;
 
@@ -156,7 +160,7 @@ class ContentController extends Controller
         $data = $request->validate([
             ...$rules,
             'sort_order' => ['required', 'integer'],
-            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'image' => [$item === null && $module !== 'anggota' ? 'required' : 'nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         unset($data['image']);
@@ -176,37 +180,9 @@ class ContentController extends Controller
         }
 
         if ($request->hasFile('image')) {
-            $file = $request->file('image');
-            $fileName = Str::random(24).'.'.$file->extension();
-            $path = $file->storeAs('uploads/'.$this->module($module)['folder'], $fileName, 'public');
-            abort_if($path === false, 500, 'Gambar gagal disimpan.');
-            $imageField = $this->module($module)['image'];
-            $data[$imageField] = '/storage/'.$path;
+            $data[$definition['image']] = $this->uploads->store($request->file('image'), $definition['folder']);
         }
 
         return $data;
-    }
-
-    private function deleteOwnedUpload(?string $imageUrl, string $folder): void
-    {
-        if (! is_string($imageUrl)) {
-            return;
-        }
-
-        if (preg_match('~^/storage/uploads/'.preg_quote($folder, '~').'/[A-Za-z0-9]{24}\.(?:jpe?g|png|webp)$~', $imageUrl) === 1) {
-            Storage::disk('public')->delete(substr($imageUrl, strlen('/storage/')));
-
-            return;
-        }
-
-        if (preg_match('~^/assets/uploads/'.preg_quote($folder, '~').'/[A-Za-z0-9]{24}\.(?:jpe?g|png|webp)$~', $imageUrl) !== 1) {
-            return;
-        }
-
-        $path = public_path(ltrim($imageUrl, '/'));
-
-        if (is_file($path)) {
-            unlink($path);
-        }
     }
 }

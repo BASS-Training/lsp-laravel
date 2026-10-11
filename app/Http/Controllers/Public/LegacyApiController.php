@@ -8,6 +8,7 @@ use App\Models\Instruktur;
 use App\Models\Kegiatan;
 use App\Models\Partner;
 use App\Models\SiteSetting;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -96,9 +97,20 @@ class LegacyApiController extends Controller
         return response()->json(['ok' => true, 'items' => $items, 'configured' => true]);
     }
 
-    public function settings(): JsonResponse
+    public function homepage(): JsonResponse
     {
-        return response()->json(['ok' => true, 'settings' => SiteSetting::query()->pluck('setting_value', 'setting_key'), 'configured' => true]);
+        return $this->settings(SiteSetting::query()->where('setting_key', 'like', 'home\\_%'));
+    }
+
+    public function profile(): JsonResponse
+    {
+        return $this->settings(SiteSetting::query());
+    }
+
+    /** @param  Builder<SiteSetting>  $query */
+    private function settings(Builder $query): JsonResponse
+    {
+        return response()->json(['ok' => true, 'settings' => $query->pluck('setting_value', 'setting_key'), 'configured' => true]);
     }
 
     /** @return array<string, bool|string|null> */

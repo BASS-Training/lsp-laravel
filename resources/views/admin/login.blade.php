@@ -8,7 +8,7 @@
 </head>
 <body class="grid min-h-screen place-items-center bg-slate-100 p-5 text-slate-800">
     <main class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
-        <a href="{{ route('home') }}" class="flex items-center gap-3"><img src="{{ asset('asset/lspfit/logofit-nobg.png') }}" alt="" class="h-12 w-12 object-contain"><span class="font-semibold text-[#0d2b4e]">LSP FIT</span></a>
+        <a href="{{ route('home') }}" class="flex items-center gap-3"><img src="{{ asset('assets/lspfit/logofit-nobg.png') }}" alt="" class="h-12 w-12 object-contain"><span class="font-semibold text-[#0d2b4e]">LSP FIT</span></a>
         <h1 class="mt-8 text-3xl font-semibold">Masuk ke dashboard</h1>
         <p class="mt-2 text-sm text-slate-500">Kelola konten website LSP FIT.</p>
         @if ($errors->any())<p role="alert" class="mt-6 rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</p>@endif

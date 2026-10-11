@@ -1,6 +1,9 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\AdminUser;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /*
@@ -15,7 +18,7 @@ use Tests\TestCase;
 */
 
 pest()->extend(TestCase::class)
- // ->use(RefreshDatabase::class)
+    ->beforeEach(fn () => createLegacySchema())
     ->in('Feature');
 
 /*
@@ -44,7 +47,81 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Meniru tabel lama (database/schema.sql) di database khusus tes (`lsp_compro_test`).
+ * Database aktif tidak pernah dimigrasi: helper ini menolak berjalan di database lain.
+ */
+function createLegacySchema(): void
 {
-    // ..
+    $database = (string) config('database.connections.'.config('database.default').'.database');
+
+    if (! str_ends_with($database, '_test')) {
+        throw new RuntimeException("Pengujian menolak berjalan di database [{$database}]; gunakan database berakhiran _test.");
+    }
+
+    Schema::disableForeignKeyConstraints();
+    foreach (['kegiatan', 'admin_users', 'anggota', 'instruktur', 'partners', 'site_settings'] as $table) {
+        Schema::dropIfExists($table);
+    }
+    Schema::enableForeignKeyConstraints();
+
+    Schema::create('kegiatan', function (Blueprint $table): void {
+        $table->id();
+        $table->string('title', 180);
+        $table->string('slug', 220)->unique();
+        $table->string('category', 80)->default('Kegiatan');
+        $table->text('summary');
+        $table->text('description');
+        $table->string('image_url');
+        $table->boolean('is_active')->default(true);
+        $table->boolean('is_highlight')->default(false);
+        $table->integer('sort_order')->default(0);
+        $table->timestamps();
+    });
+
+    Schema::create('admin_users', function (Blueprint $table): void {
+        $table->id();
+        $table->string('username')->unique();
+        $table->string('name');
+        $table->string('password_hash');
+        $table->string('role')->default('admin_konten');
+        $table->boolean('is_active')->default(true);
+        $table->timestamp('last_login_at')->nullable();
+        $table->timestamps();
+    });
+
+    foreach (['anggota' => 'photo_url', 'instruktur' => 'photo_url', 'partners' => 'logo_url'] as $name => $imageColumn) {
+        Schema::create($name, function (Blueprint $table) use ($name, $imageColumn): void {
+            $table->id();
+            $table->string('name', 140);
+            if ($name === 'anggota') {
+                $table->string('role_label', 120);
+            }
+            $table->string($imageColumn);
+            if ($name === 'partners') {
+                $table->string('website_url')->nullable();
+            }
+            $table->boolean('is_active')->default(true);
+            $table->integer('sort_order')->default(0);
+            $table->timestamps();
+        });
+    }
+
+    Schema::create('site_settings', function (Blueprint $table): void {
+        $table->string('setting_key', 80)->primary();
+        $table->text('setting_value')->nullable();
+        $table->timestamp('updated_at')->nullable();
+    });
+}
+
+function createAdmin(array $overrides = []): AdminUser
+{
+    return AdminUser::create([
+        'username' => 'admin',
+        'name' => 'Admin Uji',
+        'password_hash' => Hash::make('rahasia-123'),
+        'role' => 'super_admin',
+        'is_active' => true,
+        ...$overrides,
+    ]);
 }

@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard') · Admin LSP FIT</title>
-    <link rel="icon" href="{{ asset('asset/lspfit/favicon.ico') }}">
+    <link rel="icon" href="{{ asset('assets/lspfit/favicon.ico') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-[#f7f9fc] text-slate-800 antialiased">
     <div class="min-h-screen lg:flex">
         <aside class="hidden h-screen w-68 shrink-0 flex-col border-r border-slate-200 bg-white lg:sticky lg:top-0 lg:flex">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 border-b border-slate-100 px-6 py-6">
-                <img src="{{ asset('asset/lspfit/logofit-nobg.png') }}" alt="" class="h-11 w-11 rounded-xl border border-slate-100 object-contain p-1">
+                <img src="{{ asset('assets/lspfit/logofit-nobg.png') }}" alt="" class="h-11 w-11 rounded-xl border border-slate-100 object-contain p-1">
                 <span><strong class="block text-base text-[#0d2b4e]">LSP FIT</strong><small class="text-xs font-medium text-slate-500">Panel administrator</small></span>
             </a>
             <div class="flex-1 overflow-y-auto px-4 py-6">@include('admin.partials.navigation')</div>
