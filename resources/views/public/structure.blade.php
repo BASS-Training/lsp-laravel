@@ -19,10 +19,25 @@
         <p class="text-center text-slate-600">Belum ada data aktif.</p>
     @else
         <div aria-label="Bagan struktur organisasi LSP FIT">
+            @if ($chairs->isNotEmpty())
+                <div class="text-center">
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-amber-700">Ketua Pengarah</h3>
+                    <div class="mx-auto mt-5 grid max-w-sm gap-5">
+                        @foreach ($chairs as $member)
+                            @include('public.structure-card', ['member' => $member])
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            @if ($chairs->isNotEmpty() && $boardMembers->isNotEmpty())
+                <div aria-hidden="true" class="mx-auto h-12 w-px bg-amber-400"></div>
+            @endif
+
             @if ($boardMembers->isNotEmpty())
                 <div class="text-center">
-                    <h3 class="text-sm font-bold uppercase tracking-widest text-amber-700">Dewan Komisaris</h3>
-                    <div class="mx-auto mt-5 grid max-w-3xl gap-5 sm:grid-cols-2">
+                    <h3 class="text-sm font-bold uppercase tracking-widest text-amber-700">Anggota Dewan Pengarah</h3>
+                    <div @class(['mx-auto mt-5 grid gap-5', 'max-w-sm' => $boardMembers->count() === 1, 'max-w-3xl sm:grid-cols-2' => $boardMembers->count() > 1])>
                         @foreach ($boardMembers as $member)
                             @include('public.structure-card', ['member' => $member])
                         @endforeach
@@ -30,7 +45,7 @@
                 </div>
             @endif
 
-            @if ($boardMembers->isNotEmpty() && ($directors->isNotEmpty() || $divisionMembers->isNotEmpty()))
+            @if (($chairs->isNotEmpty() || $boardMembers->isNotEmpty()) && ($directors->isNotEmpty() || $divisionMembers->isNotEmpty()))
                 <div aria-hidden="true" class="mx-auto h-12 w-px bg-amber-400"></div>
             @endif
 

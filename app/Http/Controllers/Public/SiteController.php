@@ -65,14 +65,20 @@ class SiteController extends Controller
     public function members(): View
     {
         $people = $this->cache->collection('anggota', 'public.members', Anggota::active()->orderByDesc('sort_order')->orderBy('name'));
-        $boardMembers = $people->filter(fn (Anggota $member): bool => str_contains(mb_strtolower($member->role_label), 'komisaris'));
+        $roleHas = fn (Anggota $member, array $keywords): bool => str_contains(mb_strtolower($member->role_label), $keywords[0])
+            || (isset($keywords[1]) && str_contains(mb_strtolower($member->role_label), $keywords[1]));
+        $chairs = $people->filter(fn (Anggota $member): bool => str_contains(mb_strtolower($member->role_label), 'ketua')
+            && $roleHas($member, ['pengarah', 'komisaris']));
+        $boardMembers = $people->reject(fn (Anggota $member): bool => $chairs->contains($member))
+            ->filter(fn (Anggota $member): bool => $roleHas($member, ['pengarah', 'komisaris']));
         $directors = $people->filter(fn (Anggota $member): bool => str_contains(mb_strtolower($member->role_label), 'direktur'));
 
         return view('public.structure', [
             'people' => $people,
+            'chairs' => $chairs,
             'boardMembers' => $boardMembers,
             'directors' => $directors,
-            'divisionMembers' => $people->reject(fn (Anggota $member): bool => $boardMembers->contains($member) || $directors->contains($member)),
+            'divisionMembers' => $people->reject(fn (Anggota $member): bool => $chairs->contains($member) || $boardMembers->contains($member) || $directors->contains($member)),
         ]);
     }
 
