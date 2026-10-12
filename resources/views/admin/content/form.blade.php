@@ -16,7 +16,18 @@
             @foreach ($definition['fields'] as $field => $label)
                 <div>
                     <label for="field-{{ $field }}" class="block text-sm font-semibold text-slate-700">{{ $label }}</label>
-                    @if (in_array($field, ['summary', 'description'], true))
+                    @if ($field === 'category')
+                        <div class="mt-2 flex gap-2">
+                            <select id="field-category" name="category" required class="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-[#0d2b4e]">
+                                <option value="">Pilih kategori</option>
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category }}" @selected(old('category', $item?->category) === $category)>{{ $category }}</option>
+                                @endforeach
+                            </select>
+                            <a href="{{ route('admin.scheme-categories.index') }}" class="inline-flex shrink-0 items-center rounded-xl border border-slate-200 px-4 text-sm font-semibold text-[#0d2b4e] hover:border-[#0d2b4e]">Kelola</a>
+                        </div>
+                        @if ($categories->isEmpty())<p class="mt-2 text-xs font-medium text-amber-700">Tambahkan kategori terlebih dahulu sebelum menyimpan skema.</p>@endif
+                    @elseif (in_array($field, ['summary', 'description'], true))
                         <textarea id="field-{{ $field }}" name="{{ $field }}" rows="{{ $field === 'description' ? 8 : 4 }}" required class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#0d2b4e]">{{ old($field, $item?->{$field}) }}</textarea>
                     @else
                         <input id="field-{{ $field }}" name="{{ $field }}" value="{{ old($field, $item?->{$field}) }}" required class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#0d2b4e]">
@@ -28,6 +39,10 @@
 
     <div class="grid gap-6">
         <section aria-labelledby="image-title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 id="image-title" class="text-base font-semibold">Gambar</h2><p class="mt-1 text-xs text-slate-500">JPG, PNG, atau WEBP. Maksimal 4 MB.</p>@if ($item && $item->{$definition['image']})<div class="mt-4 flex h-40 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-50"><img src="{{ $item->{$definition['image']} }}" alt="Gambar konten saat ini" class="max-h-full max-w-full object-contain"></div>@endif<label for="content-image" class="mt-4 block text-sm font-medium text-slate-700">{{ $item ? 'Ganti gambar' : 'Unggah gambar' }}</label><input id="content-image" type="file" name="image" accept="image/jpeg,image/png,image/webp" class="mt-2 block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-[#eaf1f9] file:px-3 file:py-2 file:font-semibold file:text-[#0d2b4e]"></section>
+
+        @if ($module === 'kegiatan')
+            <section aria-labelledby="payment-title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 id="payment-title" class="text-base font-semibold">Pembayaran</h2><p class="mt-1 text-xs text-slate-500">Atur harga pendaftaran melalui Midtrans.</p><label for="payment-price" class="mt-5 block text-sm font-semibold">Harga (Rupiah)</label><input id="payment-price" type="number" min="1000" step="1000" name="payment_price" value="{{ old('payment_price', $paymentSetting?->price) }}" placeholder="Contoh: 500000" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#0d2b4e]"><label class="mt-5 flex items-start gap-3 border-t border-slate-100 pt-5 text-sm"><input type="checkbox" name="payment_enabled" value="1" @checked(old('payment_enabled', $paymentSetting?->is_enabled ?? false)) class="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0d2b4e]"><span><strong class="block font-semibold">Aktifkan pembayaran</strong><small class="mt-1 block text-slate-500">Tampilkan tombol daftar dan bayar pada halaman skema.</small></span></label></section>
+        @endif
 
         <section aria-labelledby="visibility-title" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><h2 id="visibility-title" class="text-base font-semibold">Tampilan</h2><label class="mt-5 flex items-start gap-3 text-sm"><input type="checkbox" name="is_active" value="1" @checked(old('is_active', $item?->is_active ?? true)) class="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0d2b4e]"><span><strong class="block font-semibold">Aktif di website</strong><small class="mt-1 block text-slate-500">Konten dapat dilihat pengunjung.</small></span></label>@if ($module === 'kegiatan')<label class="mt-5 flex items-start gap-3 border-t border-slate-100 pt-5 text-sm"><input type="checkbox" name="is_highlight" value="1" @checked(old('is_highlight', $item?->is_highlight ?? false)) class="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0d2b4e]"><span><strong class="block font-semibold">Skema unggulan</strong><small class="mt-1 block text-slate-500">Tampilkan dalam sorotan beranda.</small></span></label>@endif<label for="sort-order" class="mt-5 block text-sm font-semibold">Urutan tampil</label><input id="sort-order" type="number" name="sort_order" value="{{ old('sort_order', $item?->sort_order ?? 0) }}" required class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-[#0d2b4e]"><p class="mt-1 text-xs text-slate-500">Angka lebih besar tampil lebih dahulu.</p></section>
 

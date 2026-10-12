@@ -21,7 +21,7 @@
                 <a href="{{ route('about') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('about'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('about')])>Tentang</a>
                 <a href="{{ route('members') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('members'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('members')])>Struktur</a>
                 <a href="{{ route('instructors') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('instructors'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('instructors')])>Instruktur &amp; Asesor</a>
-                <a href="{{ route('schemes') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('schemes'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('schemes')])>Skema</a>
+                <a href="{{ route('schemes') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('schemes*', 'payments.*'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('schemes*', 'payments.*')])>Skema</a>
                 <a href="{{ route('contact') }}" @class(['border-b-2 border-amber-400 text-[#0d2b4e]' => request()->routeIs('contact'), 'text-slate-600 hover:text-[#0d2b4e]' => ! request()->routeIs('contact')])>Kontak</a>
                 <a href="https://app.msdmup.id/" target="_blank" rel="noopener noreferrer" class="text-slate-600 hover:text-[#0d2b4e]">Portal LMS</a>
             </nav>

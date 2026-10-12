@@ -6,7 +6,7 @@
 #   ./deploy.sh uploads-sync  salin upload dari situs PHP lama (tanpa menghapus)
 #   ./deploy.sh rollback      kembali ke commit sebelum deploy terakhir
 #
-# Database lama dipakai apa adanya: skrip ini TIDAK PERNAH menjalankan `artisan migrate`.
+# Database lama dipakai apa adanya; hanya migration tabel pendamping yang disebut eksplisit yang dijalankan.
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-/var/www/lsp-laravel}"
@@ -85,6 +85,10 @@ health_check() {
 
 build() {
     composer install --no-dev --optimize-autoloader --no-interaction
+    local payment_migration="database/migrations/2026_10_12_095736_create_scheme_payment_settings_and_payment_transactions_tables.php"
+    if [ -f "$payment_migration" ]; then
+        php artisan migrate --path="$payment_migration" --force --no-interaction
+    fi
     php artisan optimize:clear --no-interaction
     php artisan storage:link --no-interaction >/dev/null 2>&1 || true
     php artisan optimize --no-interaction

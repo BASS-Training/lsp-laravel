@@ -8,14 +8,16 @@ use App\Models\Instruktur;
 use App\Models\Kegiatan;
 use App\Models\Partner;
 use App\Models\SiteSetting;
+use App\Services\MidtransConfiguration;
 use App\Services\PublicContentCache;
+use App\Services\SchemeCategoryCatalog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 class SiteController extends Controller
 {
-    public function __construct(private PublicContentCache $cache) {}
+    public function __construct(private PublicContentCache $cache, private MidtransConfiguration $midtrans) {}
 
     public function home(): View
     {
@@ -51,8 +53,12 @@ class SiteController extends Controller
     {
         $validated = $request->validate(['id' => ['required', 'integer', 'min:1']]);
 
+        $scheme = $this->cache->model('kegiatan', 'public.scheme.'.$validated['id'], Kegiatan::active()->whereKey($validated['id']));
+
         return view('public.scheme', [
-            'scheme' => $this->cache->model('kegiatan', 'public.scheme.'.$validated['id'], Kegiatan::active()->whereKey($validated['id'])),
+            'scheme' => $scheme,
+            'paymentSetting' => $scheme->paymentSetting()->first(),
+            'midtransConfigured' => $this->midtrans->configured(),
         ]);
     }
 
@@ -104,7 +110,11 @@ class SiteController extends Controller
         return collect($this->cache->remember(
             'settings',
             'public.settings.all',
-            fn (): array => SiteSetting::query()->pluck('setting_value', 'setting_key')->all(),
+            fn (): array => SiteSetting::query()
+                ->where('setting_key', 'not like', SchemeCategoryCatalog::SETTING_PREFIX.'%')
+                ->where('setting_key', 'not like', MidtransConfiguration::SETTING_PREFIX.'%')
+                ->pluck('setting_value', 'setting_key')
+                ->all(),
         ));
     }
 }

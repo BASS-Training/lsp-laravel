@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias(['active.admin' => EnsureActiveAdmin::class]);
         $middleware->redirectGuestsTo('/admin/login');
+        $middleware->preventRequestForgery(except: ['midtrans/notification']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

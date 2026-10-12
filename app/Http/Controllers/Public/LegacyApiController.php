@@ -8,7 +8,9 @@ use App\Models\Instruktur;
 use App\Models\Kegiatan;
 use App\Models\Partner;
 use App\Models\SiteSetting;
+use App\Services\MidtransConfiguration;
 use App\Services\PublicContentCache;
+use App\Services\SchemeCategoryCatalog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -137,7 +139,12 @@ class LegacyApiController extends Controller
 
     public function profile(): JsonResponse
     {
-        return $this->settings('api.settings.profile', SiteSetting::query());
+        return $this->settings(
+            'api.settings.profile',
+            SiteSetting::query()
+                ->where('setting_key', 'not like', SchemeCategoryCatalog::SETTING_PREFIX.'%')
+                ->where('setting_key', 'not like', MidtransConfiguration::SETTING_PREFIX.'%'),
+        );
     }
 
     /** @param  Builder<SiteSetting>  $query */

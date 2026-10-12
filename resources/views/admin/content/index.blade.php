@@ -3,7 +3,7 @@
 @section('content')
 <div class="flex flex-wrap items-end justify-between gap-5">
     <div><a href="{{ route('admin.dashboard') }}" class="text-sm font-medium text-slate-500 hover:text-[#0d2b4e]">Dashboard</a><span class="mx-2 text-slate-300">/</span><span class="text-sm font-semibold text-[#0d2b4e]">{{ $definition['title'] }}</span><h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-900">{{ $definition['title'] }}</h1><p class="mt-2 text-sm text-slate-500">{{ $definition['description'] }}</p></div>
-    <a href="{{ route('admin.content.create', $module) }}" class="inline-flex items-center gap-2 rounded-xl bg-[#0d2b4e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#143a68]"><span class="text-lg leading-none" aria-hidden="true">+</span>Tambah baru</a>
+    <div class="flex flex-wrap gap-3">@if ($module === 'kegiatan')<a href="{{ route('admin.scheme-categories.index') }}" class="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-[#0d2b4e] hover:border-[#0d2b4e]">Kelola kategori</a>@endif<a href="{{ route('admin.content.create', $module) }}" class="inline-flex items-center gap-2 rounded-xl bg-[#0d2b4e] px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#143a68]"><span class="text-lg leading-none" aria-hidden="true">+</span>Tambah baru</a></div>
 </div>
 
 @if (session('status'))<p role="status" class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800">{{ session('status') }}</p>@endif

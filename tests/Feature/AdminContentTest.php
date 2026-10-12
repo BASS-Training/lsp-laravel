@@ -2,13 +2,16 @@
 
 use App\Models\Anggota;
 use App\Models\Kegiatan;
+use App\Models\SchemePaymentSetting;
 use App\Models\SiteSetting;
+use App\Services\SchemeCategoryCatalog;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     Storage::fake('uploads');
     $this->actingAs(createAdmin());
+    app(SchemeCategoryCatalog::class)->create('Kegiatan');
 });
 
 function kegiatanPayload(array $overrides = []): array
@@ -50,6 +53,25 @@ it('rejects non-image uploads and files over 4 MB', function (): void {
     $this->post('/admin/content/kegiatan', kegiatanPayload(['image' => UploadedFile::fake()->image('besar.jpg')->size(4097)]))->assertSessionHasErrors('image');
 
     expect(Kegiatan::count())->toBe(0);
+});
+
+it('requires a scheme to use a managed category', function (): void {
+    $this->get('/admin/content/kegiatan/create')->assertOk()->assertSee('<option value="Kegiatan"', false);
+
+    $this->post('/admin/content/kegiatan', kegiatanPayload(['category' => 'Kategori Bebas']))
+        ->assertSessionHasErrors('category');
+
+    expect(Kegiatan::count())->toBe(0);
+});
+
+it('stores a fixed payment price for a scheme', function (): void {
+    $this->post('/admin/content/kegiatan', kegiatanPayload([
+        'payment_price' => 750000,
+        'payment_enabled' => 1,
+    ]))->assertRedirect('/admin/content/kegiatan');
+
+    $setting = SchemePaymentSetting::firstOrFail();
+    expect($setting->price)->toBe(750000)->and($setting->is_enabled)->toBeTrue();
 });
 
 it('replaces and deletes only app-owned upload files', function (): void {

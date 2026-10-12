@@ -3,7 +3,12 @@
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\MidtransSettingsController;
+use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\SchemeCategoryController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\MidtransWebhookController;
+use App\Http\Controllers\Public\CheckoutController;
 use App\Http\Controllers\Public\LegacyApiController;
 use App\Http\Controllers\Public\SiteController;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +25,11 @@ Route::get('/instruktur', [SiteController::class, 'instructors'])->name('instruc
 Route::redirect('/asesor', '/instruktur', 301);
 Route::redirect('/gallery', '/kegiatan', 301)->name('gallery');
 Route::get('/kontak', [SiteController::class, 'contact'])->name('contact');
+Route::get('/skema/{kegiatan}/bayar', [CheckoutController::class, 'create'])->name('payments.checkout');
+Route::post('/skema/{kegiatan}/bayar', [CheckoutController::class, 'store'])->middleware('throttle:10,1')->name('payments.store');
+Route::get('/pembayaran/{payment:public_id}', [CheckoutController::class, 'show'])->name('payments.show');
+Route::post('/pembayaran/{payment:public_id}/lanjutkan', [CheckoutController::class, 'retry'])->middleware('throttle:5,1')->name('payments.retry');
+Route::post('/midtrans/notification', MidtransWebhookController::class)->name('midtrans.notification');
 
 Route::get('/api/auth.php', [LegacyApiController::class, 'authentication']);
 Route::get('/api/kegiatan.php', [LegacyApiController::class, 'kegiatan']);
@@ -34,6 +44,14 @@ Route::post('/admin/login', [AuthController::class, 'store'])->middleware('throt
 Route::post('/admin/logout', [AuthController::class, 'destroy'])->middleware('auth')->name('admin.logout');
 Route::middleware(['auth', 'active.admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('scheme-categories', SchemeCategoryController::class)
+        ->parameters(['scheme-categories' => 'category'])
+        ->except('show');
+    Route::get('/midtrans', [MidtransSettingsController::class, 'edit'])->name('midtrans.edit');
+    Route::put('/midtrans', [MidtransSettingsController::class, 'update'])->name('midtrans.update');
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
+    Route::post('/payments/{payment}/resend', [PaymentController::class, 'resend'])->middleware('throttle:5,1')->name('payments.resend');
     Route::get('/settings/{group}', [SettingsController::class, 'edit'])->name('settings.edit');
     Route::put('/settings/{group}', [SettingsController::class, 'update'])->name('settings.update');
     Route::get('/content/{module}', [ContentController::class, 'index'])->name('content.index');

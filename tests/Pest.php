@@ -60,7 +60,7 @@ function createLegacySchema(): void
     }
 
     Schema::disableForeignKeyConstraints();
-    foreach (['kegiatan', 'admin_users', 'anggota', 'instruktur', 'partners', 'site_settings'] as $table) {
+    foreach (['payment_transactions', 'scheme_payment_settings', 'kegiatan', 'admin_users', 'anggota', 'instruktur', 'partners', 'site_settings'] as $table) {
         Schema::dropIfExists($table);
     }
     Schema::enableForeignKeyConstraints();
@@ -111,6 +111,38 @@ function createLegacySchema(): void
         $table->string('setting_key', 80)->primary();
         $table->text('setting_value')->nullable();
         $table->timestamp('updated_at')->nullable();
+    });
+
+    Schema::create('scheme_payment_settings', function (Blueprint $table): void {
+        $table->id();
+        $table->unsignedInteger('kegiatan_id')->unique();
+        $table->unsignedBigInteger('price');
+        $table->boolean('is_enabled')->default(false);
+        $table->timestamps();
+    });
+
+    Schema::create('payment_transactions', function (Blueprint $table): void {
+        $table->id();
+        $table->uuid('public_id')->unique();
+        $table->string('order_id', 50)->unique();
+        $table->unsignedInteger('kegiatan_id')->nullable()->index();
+        $table->string('scheme_title', 180);
+        $table->unsignedBigInteger('amount');
+        $table->string('customer_name', 120);
+        $table->string('customer_email', 180)->index();
+        $table->string('customer_phone', 30);
+        $table->string('status', 30)->index();
+        $table->string('midtrans_status', 30)->nullable();
+        $table->string('midtrans_transaction_id', 80)->nullable()->index();
+        $table->string('payment_type', 50)->nullable();
+        $table->string('fraud_status', 30)->nullable();
+        $table->text('status_message')->nullable();
+        $table->text('midtrans_redirect_url')->nullable();
+        $table->json('notification_payload')->nullable();
+        $table->timestamp('paid_at')->nullable();
+        $table->timestamp('expired_at')->nullable();
+        $table->timestamp('confirmation_sent_at')->nullable();
+        $table->timestamps();
     });
 }
 

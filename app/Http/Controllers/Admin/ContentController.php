@@ -7,7 +7,9 @@ use App\Models\Anggota;
 use App\Models\Instruktur;
 use App\Models\Kegiatan;
 use App\Models\Partner;
+use App\Models\SchemePaymentSetting;
 use App\Services\PublicContentCache;
+use App\Services\SchemeCategoryCatalog;
 use App\Services\UploadStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -18,7 +20,11 @@ use Illuminate\Validation\Rule;
 
 class ContentController extends Controller
 {
-    public function __construct(private UploadStorage $uploads, private PublicContentCache $cache) {}
+    public function __construct(
+        private UploadStorage $uploads,
+        private PublicContentCache $cache,
+        private SchemeCategoryCatalog $categories,
+    ) {}
 
     /**
      * @return array{title: string, description: string, model: class-string<Model>, fields: array<string, string>, image: string, folder: string}
@@ -67,7 +73,13 @@ class ContentController extends Controller
 
     public function create(string $module): View
     {
-        return view('admin.content.form', ['module' => $module, 'definition' => $this->module($module), 'item' => null]);
+        return view('admin.content.form', [
+            'module' => $module,
+            'definition' => $this->module($module),
+            'item' => null,
+            'categories' => $module === 'kegiatan' ? $this->categories->names() : collect(),
+            'paymentSetting' => null,
+        ]);
     }
 
     public function edit(string $module, int $id): View
@@ -75,20 +87,34 @@ class ContentController extends Controller
         $definition = $this->module($module);
         $model = $definition['model'];
 
-        return view('admin.content.form', ['module' => $module, 'definition' => $definition, 'item' => $model::findOrFail($id)]);
+        $item = $model::findOrFail($id);
+
+        return view('admin.content.form', [
+            'module' => $module,
+            'definition' => $definition,
+            'item' => $item,
+            'categories' => $module === 'kegiatan' ? $this->categories->names() : collect(),
+            'paymentSetting' => $module === 'kegiatan' ? $item->paymentSetting()->first() : null,
+        ]);
     }
 
     public function preview(int $id): View
     {
-        return view('public.scheme', ['scheme' => Kegiatan::findOrFail($id)]);
+        return view('public.scheme', [
+            'scheme' => Kegiatan::findOrFail($id),
+            'paymentSetting' => null,
+            'midtransConfigured' => false,
+        ]);
     }
 
     public function store(Request $request, string $module): RedirectResponse
     {
         $definition = $this->module($module);
         $data = $this->validatedData($request, $module);
+        $paymentData = $this->validatedPaymentData($request, $module);
         $model = $definition['model'];
-        $model::create($data);
+        $item = $model::create($data);
+        $this->syncPaymentSetting($item, $paymentData);
         $this->cache->flush($this->cacheTag($module));
 
         return redirect()->route('admin.content.index', $module)->with('status', 'Konten berhasil ditambahkan.');
@@ -101,7 +127,9 @@ class ContentController extends Controller
         $item = $model::findOrFail($id);
         $previousImageUrl = $item->{$definition['image']};
         $data = $this->validatedData($request, $module, $item);
+        $paymentData = $this->validatedPaymentData($request, $module);
         $item->update($data);
+        $this->syncPaymentSetting($item, $paymentData);
         $this->cache->flush($this->cacheTag($module));
 
         if ($previousImageUrl !== $item->{$definition['image']}) {
@@ -117,6 +145,9 @@ class ContentController extends Controller
         $model = $definition['model'];
         $item = $model::findOrFail($id);
         $imageUrl = $item->{$definition['image']};
+        if ($item instanceof Kegiatan) {
+            $item->paymentSetting()->delete();
+        }
         $item->delete();
         $this->cache->flush($this->cacheTag($module));
         $this->uploads->deleteOwned($imageUrl, $definition['folder']);
@@ -151,7 +182,7 @@ class ContentController extends Controller
             'kegiatan' => [
                 'title' => ['required', 'string', 'max:180'],
                 'slug' => ['required', 'string', 'max:220', Rule::unique('kegiatan', 'slug')->ignore($item?->getKey())],
-                'category' => ['required', 'string', 'max:80'],
+                'category' => ['required', 'string', 'max:80', Rule::in($this->categories->names()->all())],
                 'summary' => ['required', 'string'],
                 'description' => ['required', 'string'],
             ],
@@ -193,5 +224,36 @@ class ContentController extends Controller
     private function cacheTag(string $module): string
     {
         return $module === 'mitra' ? 'partners' : $module;
+    }
+
+    /** @return array{price: int, is_enabled: bool}|null */
+    private function validatedPaymentData(Request $request, string $module): ?array
+    {
+        if ($module !== 'kegiatan') {
+            return null;
+        }
+
+        $validated = $request->validate([
+            'payment_price' => ['nullable', 'integer', 'min:1000', 'max:999999999', Rule::requiredIf($request->boolean('payment_enabled'))],
+            'payment_enabled' => ['nullable', 'boolean'],
+        ]);
+
+        return [
+            'price' => (int) ($validated['payment_price'] ?? 0),
+            'is_enabled' => $request->boolean('payment_enabled'),
+        ];
+    }
+
+    /** @param  array{price: int, is_enabled: bool}|null  $paymentData */
+    private function syncPaymentSetting(Model $item, ?array $paymentData): void
+    {
+        if (! $item instanceof Kegiatan || $paymentData === null) {
+            return;
+        }
+
+        SchemePaymentSetting::query()->updateOrCreate(
+            ['kegiatan_id' => $item->getKey()],
+            $paymentData,
+        );
     }
 }
