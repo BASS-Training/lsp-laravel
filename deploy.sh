@@ -14,7 +14,7 @@ LEGACY_DIR="${LEGACY_DIR:-/var/www/sertifikasifit.com}"
 BRANCH="${BRANCH:-main}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/lspfit-laravel}"
 KEEP_BACKUPS="${KEEP_BACKUPS:-5}"
-HEALTH_URL="${HEALTH_URL:-http://127.0.0.1/}"
+HEALTH_URL="${HEALTH_URL:-https://sertifikasifit.com/}"
 HEALTH_HOST="${HEALTH_HOST:-sertifikasifit.com}"
 WEB_USER="${WEB_USER:-www-data}"
 
