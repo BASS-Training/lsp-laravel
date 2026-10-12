@@ -51,6 +51,26 @@ it('finds a single kegiatan by id or slug and 404s otherwise', function (): void
     $this->getJson('/api/kegiatan.php?id=999')->assertNotFound()->assertJsonPath('ok', false);
 });
 
+it('serves cached kegiatan and refreshes it after an admin update', function (): void {
+    $item = kegiatanRow('cache-test');
+    $this->getJson('/api/kegiatan.php?id='.$item->id)->assertOk()->assertJsonPath('item.title', 'Judul cache-test');
+    $item->update(['title' => 'Perubahan langsung']);
+
+    $this->getJson('/api/kegiatan.php?id='.$item->id)->assertOk()->assertJsonPath('item.title', 'Judul cache-test');
+
+    $this->actingAs(createAdmin());
+    $this->put('/admin/content/kegiatan/'.$item->id, [
+        'title' => 'Perubahan admin',
+        'category' => 'Kegiatan',
+        'summary' => 's',
+        'description' => 'd',
+        'sort_order' => 0,
+        'is_active' => 1,
+    ])->assertRedirect('/admin/content/kegiatan');
+
+    $this->getJson('/api/kegiatan.php?id='.$item->id)->assertOk()->assertJsonPath('item.title', 'Perubahan admin');
+});
+
 it('only exposes inactive members to a logged in admin with all=1', function (): void {
     Anggota::create(['name' => 'Aktif', 'role_label' => 'Direktur', 'photo_url' => '/a.jpg', 'is_active' => true, 'sort_order' => 1]);
     Anggota::create(['name' => 'Mati', 'role_label' => 'Staf', 'photo_url' => '/b.jpg', 'is_active' => false, 'sort_order' => 0]);
@@ -84,4 +104,17 @@ it('limits homepage.php to home_ settings while profile.php returns every settin
 
     expect($this->getJson('/api/homepage.php')->json('settings'))->toBe(['home_hero_title' => 'Halo']);
     expect($this->getJson('/api/profile.php')->json('settings'))->toHaveKeys(['home_hero_title', 'vision']);
+});
+
+it('refreshes cached settings after an admin update', function (): void {
+    $setting = SiteSetting::create(['setting_key' => 'vision', 'setting_value' => 'Visi lama']);
+    $this->getJson('/api/profile.php')->assertOk()->assertJsonPath('settings.vision', 'Visi lama');
+    $setting->update(['setting_value' => 'Perubahan langsung']);
+
+    $this->getJson('/api/profile.php')->assertOk()->assertJsonPath('settings.vision', 'Visi lama');
+
+    $this->actingAs(createAdmin());
+    $this->put('/admin/settings/profil', ['vision' => 'Visi baru'])->assertRedirect();
+
+    $this->getJson('/api/profile.php')->assertOk()->assertJsonPath('settings.vision', 'Visi baru');
 });

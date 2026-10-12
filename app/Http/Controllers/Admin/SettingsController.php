@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use App\Services\PublicContentCache;
 use App\Services\UploadStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -12,7 +13,7 @@ use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
-    public function __construct(private UploadStorage $uploads) {}
+    public function __construct(private UploadStorage $uploads, private PublicContentCache $cache) {}
 
     private const HIDDEN_SETTING_KEYS = [
         'home_hero_image',
@@ -106,6 +107,7 @@ class SettingsController extends Controller
                 SiteSetting::create(['setting_key' => $settingKey, 'setting_value' => $url]);
             }
         }
+        $this->cache->flush('settings');
 
         foreach ($replacedUploads as [$previousUrl, $folder]) {
             $this->uploads->deleteOwned($previousUrl, $folder);

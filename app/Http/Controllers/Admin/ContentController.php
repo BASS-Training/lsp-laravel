@@ -7,6 +7,7 @@ use App\Models\Anggota;
 use App\Models\Instruktur;
 use App\Models\Kegiatan;
 use App\Models\Partner;
+use App\Services\PublicContentCache;
 use App\Services\UploadStorage;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -17,7 +18,7 @@ use Illuminate\Validation\Rule;
 
 class ContentController extends Controller
 {
-    public function __construct(private UploadStorage $uploads) {}
+    public function __construct(private UploadStorage $uploads, private PublicContentCache $cache) {}
 
     /**
      * @return array{title: string, description: string, model: class-string<Model>, fields: array<string, string>, image: string, folder: string}
@@ -88,6 +89,7 @@ class ContentController extends Controller
         $data = $this->validatedData($request, $module);
         $model = $definition['model'];
         $model::create($data);
+        $this->cache->flush($this->cacheTag($module));
 
         return redirect()->route('admin.content.index', $module)->with('status', 'Konten berhasil ditambahkan.');
     }
@@ -100,6 +102,7 @@ class ContentController extends Controller
         $previousImageUrl = $item->{$definition['image']};
         $data = $this->validatedData($request, $module, $item);
         $item->update($data);
+        $this->cache->flush($this->cacheTag($module));
 
         if ($previousImageUrl !== $item->{$definition['image']}) {
             $this->uploads->deleteOwned($previousImageUrl, $definition['folder']);
@@ -115,6 +118,7 @@ class ContentController extends Controller
         $item = $model::findOrFail($id);
         $imageUrl = $item->{$definition['image']};
         $item->delete();
+        $this->cache->flush($this->cacheTag($module));
         $this->uploads->deleteOwned($imageUrl, $definition['folder']);
 
         return redirect()->route('admin.content.index', $module)->with('status', 'Konten berhasil dihapus.');
@@ -184,5 +188,10 @@ class ContentController extends Controller
         }
 
         return $data;
+    }
+
+    private function cacheTag(string $module): string
+    {
+        return $module === 'mitra' ? 'partners' : $module;
     }
 }

@@ -12,10 +12,15 @@ it('has no migration that touches the legacy tables or schema', function (): voi
     }
 });
 
-it('configures file based sessions and cache so no extra tables are needed', function (): void {
+it('configures file based sessions and Redis cache so no extra tables are needed', function (): void {
     $example = file_get_contents(base_path('.env.example'));
 
-    expect($example)->toContain('SESSION_DRIVER=file')->toContain('CACHE_STORE=file')->toContain('QUEUE_CONNECTION=sync');
+    expect($example)
+        ->toContain('SESSION_DRIVER=file')
+        ->toContain('CACHE_STORE=redis')
+        ->toContain('REDIS_CLIENT=predis')
+        ->toContain('REDIS_CACHE_DB=1')
+        ->toContain('QUEUE_CONNECTION=sync');
 });
 
 it('refuses to run schema helpers against the live database', function (): void {

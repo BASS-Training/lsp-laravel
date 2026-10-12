@@ -37,6 +37,14 @@ it('hides inactive schemes from the list', function (): void {
     $this->get('/kegiatan')->assertSee('Terlihat')->assertDontSee('Tersembunyi');
 });
 
+it('serves paginated public data from cache on repeated requests', function (): void {
+    $item = makeKegiatan(['title' => 'Judul tersimpan']);
+    $this->get('/kegiatan')->assertOk()->assertSee('Judul tersimpan');
+    $item->update(['title' => 'Judul database']);
+
+    $this->get('/kegiatan')->assertOk()->assertSee('Judul tersimpan')->assertDontSee('Judul database');
+});
+
 it('redirects legacy html urls permanently', function (string $legacy, string $target): void {
     $this->get($legacy)->assertStatus(301)->assertRedirect($target);
 })->with([
